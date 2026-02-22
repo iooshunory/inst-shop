@@ -149,19 +149,19 @@ The agent automatically escalates (sets `waiting_for_operator = true`, notifies 
 **`leads`** — main table
 
 ```sql
-external_id          VARCHAR   -- platform user ID
-channel_type         VARCHAR   -- facebook / instagram / chat
-username             VARCHAR
-first_name           VARCHAR
-waiting_for_operator BOOLEAN
-operator_connected   BOOLEAN
-connected_operator_id    INT
-connected_operator_name  VARCHAR
-agent_disabled       BOOLEAN
-agent_disable_type   VARCHAR   -- temporary / manual / NULL
-last_activity_at     TIMESTAMP
-last_message_from    TEXT
-channel_id           VARCHAR
+external_id                 VARCHAR   -- platform user ID
+channel_type                VARCHAR   -- facebook / instagram / chat
+username                    VARCHAR
+first_name                  VARCHAR
+waiting_for_operator        BOOLEAN
+operator_connected          BOOLEAN
+connected_operator_id       INT
+connected_operator_name     VARCHAR
+agent_disabled              BOOLEAN
+agent_disable_type          VARCHAR   -- temporary / manual / NULL
+last_activity_at            TIMESTAMP
+last_message_from           TEXT
+channel_id                  VARCHAR
 ```
 
 **`chat_buffer`** — temporary message queue per chat  
