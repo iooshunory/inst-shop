@@ -1,4 +1,4 @@
-# 🍄 MuhoMarket — AI Sales Chatbot with Operator Panel
+# 🍄 AI Sales Chatbot with Operator Panel
 
 > Multi-channel AI sales assistant for a natural mushroom & herbal products shop, built on n8n. Handles Facebook, Instagram, and web chat simultaneously — with smart escalation to human operators and a full Telegram-based CRM panel.
 
@@ -6,7 +6,7 @@
 
 ## 📌 What This Project Does
 
-MuhoMarket is an end-to-end automated sales system for a Ukrainian online shop selling medicinal mushrooms, herbal teas, and natural remedies. The AI agent consults customers in authentic Ukrainian, recommends products based on their health needs, and hands off to a live operator when needed — all without the business owner manually handling every message.
+This is an end-to-end automated sales system for an online shop selling medicinal mushrooms, herbal teas, and natural remedies. The AI agent consults customers in authentic Ukrainian, recommends products based on their health needs, and hands off to a live operator when needed — all without the business owner manually handling every message.
 
 **Core capabilities:**
 
