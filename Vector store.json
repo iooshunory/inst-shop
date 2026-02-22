@@ -1,0 +1,456 @@
+{
+  "name": "Vector store",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [1072, -160],
+      "id": "5b889d8c-d084-46e6-84ba-1807109ed714",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CRED_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $('Google Drive1').item.json.id }}"
+              },
+              {
+                "name": "articles",
+                "value": "articles"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [1200, 0],
+      "id": "55ec2088-2ce1-457e-bf3d-4ffdefd28315",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [1328, 144],
+      "id": "83a45a50-8188-47ee-9c52-970e04383a80",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [992, 112],
+      "id": "07ced653-64d5-4850-bdc4-768775d183bc",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CRED_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [432, -160],
+      "id": "505b9453-aa0e-498e-98be-39f19526cfee",
+      "name": "Скачивание файла",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_GDRIVE_CRED_ID",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-304, 144],
+      "id": "c17802fa-bb23-4218-8f16-a741f4a8047c",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "YOUR_FOLDER_ID",
+            "mode": "list",
+            "cachedResultName": "Статті",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/YOUR_FOLDER_ID"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [160, -160],
+      "id": "e80a5d92-9e77-4162-ad35-e7ddf3aa0d88",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_GDRIVE_CRED_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "metadata",
+              "condition": "!="
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-80, -160],
+      "id": "4ba553e9-7b5b-488b-bb5c-0b1167b16ba2",
+      "name": "Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "your_db_name"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [688, -160],
+      "id": "66520ee8-9215-4802-8cf4-4733228440b4",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [1552, 384],
+      "id": "f86fb9a9-43d0-473b-ba8f-efef414216ea",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CRED_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "FAQ",
+                "value": "FAQ"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [1680, 592],
+      "id": "3033a3d4-a36f-4825-bdad-34a249e0b283",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [1872, 752],
+      "id": "12205c29-e525-4168-b37c-0feb727c0614",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [1424, 592],
+      "id": "20f108ff-ff28-4fc6-a272-1c035e33d29d",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CRED_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [544, 384],
+      "id": "4770ff40-c255-4e05-941c-785f43a37316",
+      "name": "Скачивание файла1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_GDRIVE_CRED_ID",
+          "name": "Google Drive account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "YOUR_FILE_ID",
+          "mode": "list",
+          "cachedResultName": "faq.txt",
+          "cachedResultUrl": "https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [288, 384],
+      "id": "e96131a5-0b3e-4443-abbb-d851a3e58b3c",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_GDRIVE_CRED_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [64, 224],
+      "id": "ddd418c5-67bf-454d-9fbb-422b1d9c7bc2",
+      "name": "Postgres1",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "your_db_name"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [800, 384],
+      "id": "27f64147-f169-4ab6-85bc-19fdd3f5b0bd",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Функція для парсингу питань та відповідей\nfunction parseQuestionsAndAnswers(inputData) {\n  const results = [];\n  \n  // Отримуємо текст з input data\n  let text = inputData[0].data;\n  \n  // Нормалізуємо текст - заміняємо різні види переносів на звичайні\n  text = text.replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n');\n  \n  // Знаходимо всі позиції \"Питання:\" та \"Відповідь:\"\n  const questionMatches = [...text.matchAll(/Питання:\\s*/g)];\n  const answerMatches = [...text.matchAll(/Відповідь:\\s*/g)];\n  \n  // Створюємо масив всіх маркерів з їх позиціями\n  const markers = [];\n  \n  questionMatches.forEach(match => {\n    markers.push({\n      type: 'question',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  answerMatches.forEach(match => {\n    markers.push({\n      type: 'answer',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  // Сортуємо маркери по позиції\n  markers.sort((a, b) => a.index - b.index);\n  \n  // Парсимо пари питання-відповідь\n  let currentQuestion = '';\n  let currentAnswer = '';\n  let state = 'none';\n  \n  for (let i = 0; i < markers.length; i++) {\n    const marker = markers[i];\n    const nextMarker = markers[i + 1];\n    \n    if (marker.type === 'question') {\n      if (state === 'answer' && currentQuestion && currentAnswer) {\n        results.push({\n          question: currentQuestion.trim(),\n          answer: currentAnswer.trim()\n        });\n      }\n      \n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentQuestion = text.substring(marker.position, endPos).trim();\n      \n      const answerInQuestion = currentQuestion.indexOf('Відповідь:');\n      if (answerInQuestion !== -1) {\n        currentQuestion = currentQuestion.substring(0, answerInQuestion).trim();\n      }\n      \n      state = 'question';\n      currentAnswer = '';\n      \n    } else if (marker.type === 'answer') {\n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentAnswer = text.substring(marker.position, endPos).trim();\n      \n      const questionInAnswer = currentAnswer.indexOf('Питання:');\n      if (questionInAnswer !== -1) {\n        currentAnswer = currentAnswer.substring(0, questionInAnswer).trim();\n      }\n      \n      state = 'answer';\n      \n      if (currentQuestion && currentAnswer) {\n        results.push({\n          question: currentQuestion.trim(),\n          answer: currentAnswer.trim()\n        });\n        currentQuestion = '';\n        currentAnswer = '';\n        state = 'none';\n      }\n    }\n  }\n  \n  if (currentQuestion && currentAnswer) {\n    results.push({\n      question: currentQuestion.trim(),\n      answer: currentAnswer.trim()\n    });\n  }\n  \n  return results;\n}\n\n// Ваші вхідні дані (ОЧИЩЕНО)\nconst inputData = [\n  {\n    \"data\": \"Питання: Тестове питання 1?\\nВідповідь: Тестова відповідь 1.\\n\\nПитання: Тестове питання 2?\\nВідповідь: Тестова відповідь 2.\\n\\nПитання: Тестове питання 3?\\nВідповідь: Тестова відповідь 3.\"\n  }\n];\n\nfunction parseQuestionsAndAnswersMain(inputData) {\n  const results = [];\n  let text;\n  \n  if (inputData && inputData.length > 0) {\n    if (inputData[0].data) {\n      text = inputData[0].data;\n    } else if (inputData[0].json && inputData[0].json.data) {\n      text = inputData[0].json.data;\n    } else if (inputData[0].json) {\n      text = inputData[0].json;\n    } else if (typeof inputData[0] === 'string') {\n      text = inputData[0];\n    } else {\n      console.log('Input data structure:', JSON.stringify(inputData, null, 2));\n      throw new Error('Не вдається знайти текстові дані у вхідних даних');\n    }\n  } else {\n    throw new Error('Вхідні дані порожні або відсутні');\n  }\n  \n  if (!text || typeof text !== 'string') {\n    console.log('Text value:', text);\n    console.log('Text type:', typeof text);\n    throw new Error('Текст не є рядком або порожній');\n  }\n  \n  text = text.replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n');\n  \n  const questionMatches = [...text.matchAll(/Питання:\\s*/g)];\n  const answerMatches = [...text.matchAll(/Відповідь:\\s*/g)];\n  \n  const markers = [];\n  \n  questionMatches.forEach(match => {\n    markers.push({\n      type: 'question',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  answerMatches.forEach(match => {\n    markers.push({\n      type: 'answer',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  markers.sort((a, b) => a.index - b.index);\n  \n  let currentQuestion = '';\n  let currentAnswer = '';\n  let state = 'none';\n  \n  for (let i = 0; i < markers.length; i++) {\n    const marker = markers[i];\n    const nextMarker = markers[i + 1];\n    \n    if (marker.type === 'question') {\n      if (state === 'answer' && currentQuestion && currentAnswer) {\n        results.push({\n          question: currentQuestion.trim(),\n          answer: currentAnswer.trim()\n        });\n      }\n      \n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentQuestion = text.substring(marker.position, endPos).trim();\n      \n      const answerInQuestion = currentQuestion.indexOf('Відповідь:');\n      if (answerInQuestion !== -1) {\n        currentQuestion = currentQuestion.substring(0, answerInQuestion).trim();\n      }\n      \n      state = 'question';\n      currentAnswer = '';\n      \n    } else if (marker.type === 'answer') {\n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentAnswer = text.substring(marker.position, endPos).trim();\n      \n      const questionInAnswer = currentAnswer.indexOf('Питання:');\n      if (questionInAnswer !== -1) {\n        currentAnswer = currentAnswer.substring(0, questionInAnswer).trim();\n      }\n      \n      state = 'answer';\n      \n      if (currentQuestion && currentAnswer) {\n        results.push({\n          question: currentQuestion.trim(),\n          answer: currentAnswer.trim()\n        });\n        currentQuestion = '';\n        currentAnswer = '';\n        state = 'none';\n      }\n    }\n  }\n  \n  if (currentQuestion && currentAnswer) {\n    results.push({\n      question: currentQuestion.trim(),\n      answer: currentAnswer.trim()\n    });\n  }\n  \n  return results;\n}\n\nconsole.log('Input structure:', JSON.stringify($input.all(), null, 2));\nconst parsedData = parseQuestionsAndAnswersMain($input.all());\n\nreturn parsedData.map(item => ({\n  json: {\n    question: item.question,\n    answer: item.answer\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1072, 560],
+      "id": "828a1aa9-eeaa-47d1-bb69-7ae898652be1",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e675cf37-d208-4673-936b-e7d3c8882789",
+              "name": "answer",
+              "value": "={{ $json.answer }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1280, 384],
+      "id": "499b122c-6b2d-4db3-a7e6-6ca0594aeffb",
+      "name": "Edit Fields",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Копія логіки парсингу з попереднього вузла\nconst inputData = [\n  {\n    \"data\": \"Питання: Тестове питання 1?\\nВідповідь: Тестова відповідь 1.\\n\\nПитання: Тестове питання 2?\\nВідповідь: Тестова відповідь 2.\\n\\nПитання: Тестове питання 3?\\nВідповідь: Тестова відповідь 3.\"\n  }\n];\n\nfunction parseQuestionsAndAnswersMain(inputData) {\n  const results = [];\n  let text;\n  \n  if (inputData && inputData.length > 0) {\n    if (inputData[0].data) {\n      text = inputData[0].data;\n    } else if (inputData[0].json && inputData[0].json.data) {\n      text = inputData[0].json.data;\n    } else if (inputData[0].json) {\n      text = inputData[0].json;\n    } else if (typeof inputData[0] === 'string') {\n      text = inputData[0];\n    } else {\n      console.log('Input data structure:', JSON.stringify(inputData, null, 2));\n      throw new Error('Не вдається знайти текстові дані у вхідних даних');\n    }\n  } else {\n    throw new Error('Вхідні дані порожні або відсутні');\n  }\n  \n  if (!text || typeof text !== 'string') {\n    throw new Error('Текст не є рядком або порожній');\n  }\n  \n  text = text.replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n');\n  \n  const questionMatches = [...text.matchAll(/Питання:\\s*/g)];\n  const answerMatches = [...text.matchAll(/Відповідь:\\s*/g)];\n  \n  const markers = [];\n  \n  questionMatches.forEach(match => {\n    markers.push({\n      type: 'question',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  answerMatches.forEach(match => {\n    markers.push({\n      type: 'answer',\n      position: match.index + match[0].length,\n      index: match.index\n    });\n  });\n  \n  markers.sort((a, b) => a.index - b.index);\n  \n  let currentQuestion = '';\n  let currentAnswer = '';\n  let state = 'none';\n  \n  for (let i = 0; i < markers.length; i++) {\n    const marker = markers[i];\n    const nextMarker = markers[i + 1];\n    \n    if (marker.type === 'question') {\n      if (state === 'answer' && currentQuestion && currentAnswer) {\n        results.push({\n          content: `Питання: ${currentQuestion.trim()}\\nВідповідь: ${currentAnswer.trim()}`\n        });\n      }\n      \n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentQuestion = text.substring(marker.position, endPos).trim();\n      \n      const answerInQuestion = currentQuestion.indexOf('Відповідь:');\n      if (answerInQuestion !== -1) {\n        currentQuestion = currentQuestion.substring(0, answerInQuestion).trim();\n      }\n      \n      state = 'question';\n      currentAnswer = '';\n      \n    } else if (marker.type === 'answer') {\n      const endPos = nextMarker ? nextMarker.index : text.length;\n      currentAnswer = text.substring(marker.position, endPos).trim();\n      \n      const questionInAnswer = currentAnswer.indexOf('Питання:');\n      if (questionInAnswer !== -1) {\n        currentAnswer = currentAnswer.substring(0, questionInAnswer).trim();\n      }\n      \n      state = 'answer';\n      \n      if (currentQuestion && currentAnswer) {\n        results.push({\n          content: `Питання: ${currentQuestion.trim()}\\nВідповідь: ${currentAnswer.trim()}`\n        });\n        currentQuestion = '';\n        currentAnswer = '';\n        state = 'none';\n      }\n    }\n  }\n  \n  if (currentQuestion && currentAnswer) {\n    results.push({\n      content: `Питання: ${currentQuestion.trim()}\\nВідповідь: ${currentAnswer.trim()}`\n    });\n  }\n  \n  return results;\n}\n\nconsole.log('Input structure:', JSON.stringify($input.all(), null, 2));\nconst parsedData = parseQuestionsAndAnswersMain($input.all());\n\nreturn parsedData.map(item => ({\n  json: {\n    content: item.content\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 384],
+      "id": "6515a605-1ef2-4aee-8a69-06dd85d44a4b",
+      "name": "Code1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Default Data Loader": {
+      "ai_document": [[{"node": "Supabase Vector Store","type": "ai_document","index": 0}]]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [[{"node": "Default Data Loader","type": "ai_textSplitter","index": 0}]]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [[{"node": "Supabase Vector Store","type": "ai_embedding","index": 0}]]
+    },
+    "Скачивание файла": {
+      "main": [[{"node": "Extract from File1","type": "main","index": 0}]]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [[{"node": "Google Drive1","type": "main","index": 0}]]
+    },
+    "Google Drive1": {
+      "main": [[{"node": "Скачивание файла","type": "main","index": 0}]]
+    },
+    "Postgres": {"main": [[]]},
+    "Extract from File1": {
+      "main": [[{"node": "Supabase Vector Store","type": "main","index": 0}]]
+    },
+    "Default Data Loader1": {
+      "ai_document": [[{"node": "Supabase Vector Store1","type": "ai_document","index": 0}]]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [[{"node": "Default Data Loader1","type": "ai_textSplitter","index": 0}]]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [[{"node": "Supabase Vector Store1","type": "ai_embedding","index": 0}]]
+    },
+    "Скачивание файла1": {
+      "main": [[{"node": "Extract from File","type": "main","index": 0}]]
+    },
+    "Google Drive": {
+      "main": [[{"node": "Скачивание файла1","type": "main","index": 0}]]
+    },
+    "Postgres1": {"main": [[]]},
+    "Extract from File": {
+      "main": [[{"node": "Code1","type": "main","index": 0}]]
+    },
+    "Code": {"main": [[]]},
+    "Edit Fields": {
+      "main": [[{"node": "Supabase Vector Store1","type": "main","index": 0}]]
+    },
+    "Code1": {
+      "main": [[{"node": "Edit Fields","type": "main","index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2c5d024e-ea2a-442a-ae6d-493e9d45ba03",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "3hwm8TpSWEoBFeXa",
+  "tags": []
+}

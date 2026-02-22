@@ -1,0 +1,291 @@
+{
+  "name": "Отримання товарів",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://openapi.keycrm.app/v1/products?limit=50&page=2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-176, -48],
+      "id": "2f627444-0c26-4e2a-9338-757fa8b86f90",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_KEYCRM_CRED_ID",
+          "name": "KeyCRM"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [80, -128],
+      "id": "542a3877-ed09-4f2e-8a12-a602b3d127c4",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node - форматуємо всі товари в JSON формат\nconst merged = []; \nfor (const entry of items) {\n  const payload = entry.json;\n  let data = [];\n  if (Array.isArray(payload)) {\n    data = payload[0]?.data ?? payload;\n  } else if (Array.isArray(payload.data)) {\n    data = payload.data;\n  }\n  for (const { id, name, description } of data) {\n    merged.push({ id, name, description });\n  }\n}\nlet jsonString = JSON.stringify(merged, null, 2);\nreturn [\n  {\n    json: {\n      count: merged.length,\n      products_json: jsonString\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [272, -128],
+      "id": "2dffb8eb-1ee1-4746-b00d-cf1dc16acf14",
+      "name": "фільтрація"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-496, 224],
+      "id": "0ae63956-030e-4bc9-afea-0978128f4b39",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://openapi.keycrm.app/v1/products/38",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-176, -224],
+      "id": "5131882c-519c-4264-ab3e-222443e2985e",
+      "name": "Page 1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_KEYCRM_CRED_ID",
+          "name": "KeyCRM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# ЕКСПЕРТНА СИСТЕМА ПОШУКУ ТОВАРІВ\n\nТи - інтелектуальна система пошуку для магазину грибів та натуральних продуктів.\n\n## АЛГОРИТМ ПОШУКУ (СУВОРО ПО ПОРЯДКУ):\n\n### ЕТАП 1: ПОШУК ПО НАЗВІ (НАЙВИЩИЙ ПРІОРИТЕТ)\nТочний збіг з назвою товару. Часткове включення назви в запит. Назва товару включена в запит. Синоніми та альтернативні назви.\n\n### ЕТАП 2: СЕМАНТИЧНИЙ ПОШУК (ЯКЩО ЕТАП 1 НЕ ДАВ РЕЗУЛЬТАТІВ)\nКлючові слова в описах товарів. Лікувальні властивості та ефекти. Схожі характеристики та застосування. Категорії та групи товарів.\n\n## ПРАВИЛА ПРІОРИТИЗАЦІЇ:\n1. **exact_name** - найвищий пріоритет (точний збіг)\n2. **partial_name** - високий пріоритет (частина назви)\n3. **synonym** - середній пріоритет (синоніми)\n4. **semantic** - низький пріоритет (за властивостями)\n\n## ЧІТКІ КРИТЕРІЇ ВИЗНАЧЕННЯ MATCH_TYPE:\n\n### exact_name - ПОВНИЙ ТОЧНИЙ ЗБІГ:\nНазва товару ПОВНІСТЮ збігається з запитом (з точністю до регістру та закінчень). Приклади: \"Анчан\" = \"Анчан\", \"рейші\" = \"Рейші\", \"чага\" = \"Чага\"\n\n### partial_name - ЧАСТКОВИЙ ЗБІГ НАЗВИ:\nЗапит містить ЧАСТИНУ назви товару або навпаки. Приклади: \"чоловіча\" → \"Чоловічий Капсули\", \"гриб рейші\" → \"Рейші\"\n\n### synonym - СИНОНІМИ ТА АЛЬТЕРНАТИВНІ НАЗВИ:\nРізні назви одного товару. Приклади: \"трутовик\" = \"Чага\", \"lions mane\" = \"Їжовик\"\n\n### semantic - СЕМАНТИЧНИЙ ЗВ'ЯЗОК:\nПошук за властивостями, ефектами, призначенням. Приклади: \"імунітет\" → товари для імунітету, \"стрес\" → заспокійливі\n\n## КРИТИЧНО ВАЖЛИВЕ ПРАВИЛО КІЛЬКОСТІ РЕЗУЛЬТАТІВ:\n\nБУДЬ-ЯКИЙ ЗБІГ ПО НАЗВІ = ТІЛЬКИ 1 ТОВАР!\n\nЯКЩО ЗНАЙДЕНО ЗБІГ ПО НАЗВІ (exact_name, partial_name, synonym):\nПОВЕРТАЙ ТІЛЬКИ ОДИН НАЙКРАЩИЙ ТОВАР! Вибирай той, що найточніше відповідає запиту. Клієнт шукає конкретний товар, не варіанти.\n\nЯКЩО СЕМАНТИЧНИЙ ПОШУК (match_type: semantic):\nМожна повертати до 5 товарів. Клієнт шукає за ефектом/властивістю. Потрібні варіанти для вибору.\n\nАЛГОРИТМ ВИБОРУ НАЙКРАЩОГО:\n1. Найточніший збіг назви\n2. Найбільше слів збігається з запитом\n3. Найкоротша назва (менше зайвих слів)\n\n## ПРИКЛАДИ ПРАВИЛЬНОЇ ЛОГІКИ:\n\nEXACT_NAME (1 результат):\n\"Анчан\" → \"Анчан\" (точний збіг). \"Рейші\" → \"Рейші\" (точний збіг). \"Чага\" → \"Чага\" (точний збіг)\n\nPARTIAL_NAME (1 результат - НАЙКРАЩИЙ!):\n\"чоловіча сила\" → \"Чай Чоловіча Сила\" (точніший збіг, НЕ \"Чоловічий Капсули\"). \"чоловічий\" → \"Чоловічий Капсули\" (найточніший збіг). \"гриб рейші\" → \"Рейші\" (містить назву)\n\nSEMANTIC (до 5 результатів):\n\"імунітет\" → рейші, чага, шиітаке (за властивістю). \"стрес\" → ашваганда, рейші, меліса (за ефектом). \"енергія\" → кордицепс, женьшень (за призначенням)\n\n## ФОРМАТ ВІДПОВІДІ:\n```json\n{\n  \"found_products\": [\n    {\n      \"id\": \"ID_товару\",\n      \"name\": \"Назва товару\", \n      \"description\": \"Опис товару\",\n      \"relevance_reason\": \"Чому цей товар підходить\",\n      \"match_type\": \"exact_name|partial_name|synonym|semantic\"\n    }\n  ],\n  \"total_found\": кількість_знайдених,\n  \"search_summary\": \"Коротке резюме пошуку та використаного методу\"\n}\n```\n\n## ОБМЕЖЕННЯ:\nEXACT_NAME: Тільки 1 товар (повний збіг назви). PARTIAL_NAME/SYNONYM: Тільки 1 товар (найточніший збіг!). SEMANTIC: До 5 товарів (пошук за властивостями). Сортування за пріоритетом: exact → partial → synonym → semantic. Якщо нічого не знайдено - порожній масив. Відповідь ТІЛЬКИ у JSON форматі. КРИТИЧНО: При збігу по назві - тільки ОДИН найкращий товар!\n\n## ІНСТРУКЦІЯ ДЛЯ РОБОТИ:\nОтримай запит від агента. Отримай список товарів. ЕТАП 1: Шукай ТОЧНІ збіги назв (exact_name). ЕТАП 2: Якщо немає точних - шукай ЧАСТКОВІ збіги (partial_name, synonym). ЕТАП 3: Якщо немає часткових - СЕМАНТИЧНИЙ пошук (semantic). ЯКЩО ЗНАЙДЕНО КІЛЬКА ЗБІГІВ ПО НАЗВІ: Вибери ТІЛЬКИ ОДИН найточніший. \"Чай Чоловіча Сила\" краще ніж \"Чоловічий Капсули\" для запиту \"чоловіча сила\". Пріоритет: більше точних слів у назві. ПРАВИЛЬНО визначай match_type за критеріями вище. Поверни JSON відповідь.\n\n## КРИТИЧНА ПЕРЕВІРКА ПЕРЕД ВІДПОВІДДЮ:\nЧи правильно визначений match_type? Чи відповідає кількість результатів типу збігу? Чи є назва товару точним/частковим збігом з запитом? ЧИ ВИБРАВ ТІЛЬКИ ОДИН НАЙКРАЩИЙ товар при збігу по назві? ЧИ НЕ ПОВЕРТАЮ КІЛЬКА товарів при partial_name?\n\n## ПРИКЛАДИ ЛОГІКИ:\nЗАПИТ: \"рейші\" (EXACT)\n```json\n{\n  \"found_products\": [\n    {\n      \"id\": \"123\",\n      \"name\": \"Рейші\",\n      \"description\": \"...\",\n      \"relevance_reason\": \"Точний збіг назви\",\n      \"match_type\": \"exact_name\"\n    }\n  ],\n  \"total_found\": 1,\n  \"search_summary\": \"Знайдено точний збіг по назві товару\"\n}\n```\n\nЗАПИТ: \"чоловіча сила\" (PARTIAL - ТІЛЬКИ НАЙКРАЩИЙ!)\n```json\n{\n  \"found_products\": [\n    {\n      \"id\": \"24\",\n      \"name\": \"Чай Чоловіча Сила\", \n      \"description\": \"...\",\n      \"relevance_reason\": \"Точний збіг фрази в назві товару\",\n      \"match_type\": \"partial_name\"\n    }\n  ],\n  \"total_found\": 1,\n  \"search_summary\": \"Знайдено найточніший збіг по назві товару\"\n}\n```\nПРИМІТКА: \"Чоловічий Капсули\" НЕ включається, бо \"Чай Чоловіча Сила\" точніший збіг!\n\nЗАПИТ: \"для імунітету\"\n```json\n{\n  \"found_products\": [\n    {\n      \"id\": \"123\",\n      \"name\": \"Гриб Рейші\",\n      \"description\": \"...\",\n      \"relevance_reason\": \"Підвищує імунітет\",\n      \"match_type\": \"semantic\"\n    },\n    {\n      \"id\": \"456\",\n      \"name\": \"Чага\",\n      \"description\": \"...\",\n      \"relevance_reason\": \"Зміцнює імунну систему\",\n      \"match_type\": \"semantic\"\n    }\n  ],\n  \"total_found\": 2,\n  \"search_summary\": \"Семантичний пошук за властивістю імунітет\"\n}\n```\n\nКРИТИЧНО ВАЖЛИВО: ЗБІГ ПО НАЗВІ = ТІЛЬКИ 1 ТОВАР (навіть якщо знайдено кілька). Вибирай найточніший збіг з назвою. \"чоловіча сила\" → \"Чай Чоловіча Сила\" (НЕ \"Чоловічий Капсули\"). EXACT_NAME ≠ PARTIAL_NAME - не плутай! ПРАВИЛЬНО визначай match_type - це критично! Семантичний пошук ТІЛЬКИ якщо немає збігів по назві.",
+              "role": "system"
+            },
+            {
+              "content": "=Запит: {{ $json.query }}\n\nТовари: {{ $json.products_json }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [720, -128],
+      "id": "badb7faf-0b46-476b-98c5-463c62378ff9",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CRED_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [528, -128],
+      "id": "c46463e7-d026-4b3c-b7b4-a8d4e9d8d13c",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [992, 80],
+      "id": "6cffc36e-72a4-4ab1-a490-983e7d616260",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Список грибів.",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Аркуш1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [-224, 224],
+      "id": "930c0e80-37eb-4876-a99a-80eefaab69c3",
+      "name": "Google Sheets",
+      "retryOnFail": true,
+      "waitBetweenTries": 500,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GSHEETS_CRED_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Безпечна обробка даних\ntry {\n  const inputItems = items || [];\n  const allItems = inputItems.map(item => item.json || item);\n  console.log(`Processed ${allItems.length} items`);\n  return [{\n    json: {\n      data: allItems,\n      count: allItems.length\n    }\n  }];\n} catch (error) {\n  console.error('Error processing items:', error);\n  return [{\n    json: {\n      data: [],\n      error: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 224],
+      "id": "3518c3fb-1b61-4429-8c24-5ad7f3b758ff",
+      "name": "фільтрація1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# ПРОМПТ ДЛЯ LIST OF PRODUCTS - ПОШУК ТОВАРІВ\n\n---\n\n## 🎯 ЯДРО СИСТЕМИ\nТИ — експерт з точного пошуку товарів у каталозі. Знаходиш товари за запитами клієнтів, враховуючи синоніми та різні назви.\n\n---\n\n## 📚 БАЗА СИНОНІМІВ ТА НАЗВ\n\n### ОСНОВНІ ГРИБИ\n```xml\n<MUSHROOM_SYNONYMS>\n  МУХОМОР:\n  - мухомор, мухоморчик, мухоморний, amanita muscaria, amanita\n\n  ЇЖОВИК:\n  - їжовик, їжовичок, герицій, hericium erinaceus, hericium\n\n  КОРДИЦЕПС:\n  - кордицепс, кордицепс воєнний, cordyceps militaris, cordyceps\n\n  РЕЙШІ:\n  - рейші, рейшик, ganoderma lucidum, ganoderma\n\n  ЛИСИЧКА:\n  - лисичка, лисички, cantharellus cibarius, cantharellus\n\n  ЧАГА:\n  - чага, inonotus obliquus, чорний березовий гриб\n\n  ВЕСЕЛКА:\n  - веселка, веселека, phallus impudicus\n\n  ШИЇТАКЕ:\n  - шиїтаке, шіїтаке, lentinula edodes\n\n  МАЙТАКЕ:\n  - майтаке, грифола, grifola frondosa\n\n  ТРАМЕТИС:\n  - траметис, trametes versicolor\n</MUSHROOM_SYNONYMS>\n```\n\n### ФОРМИ ТОВАРІВ\n```xml\n<PRODUCT_FORMS>\n  МЕЛЕНИЙ: мелений, мелена, порошок, молотий\n  ЦІЛИЙ: цілий, ціла, цільний, слайсами, кусочками\n  КАПСУЛИ: капсули, капсула, в капсулах\n  НАСТОЯНКА: настоянка, настойка, екстракт\n  МАЗЬ: мазь, крем, бальзам\n</PRODUCT_FORMS>\n```\n\n---\n\n## 🔍 АЛГОРИТМ ПОШУКУ\n\n### КРОК 1: РОЗПІЗНАВАННЯ ЗАПИТУ\n```xml\n<QUERY_ANALYSIS>\n  1. Витягти НАЗВУ ГРИБА з запиту\n  2. Витягти ФОРМУ товару (мелений/цілий/капсули/мазь)\n  3. Витягти ВАГУ/КІЛЬКІСТЬ (50г/100г/100 капсул/200 капсул)\n  4. Перевірити синоніми для розширення пошуку\n</QUERY_ANALYSIS>\n```\n\n### КРОК 2: ГНУЧКИЙ ПОШУК\n```xml\n<FLEXIBLE_SEARCH>\n  1. Спочатку шукати ТОЧНІ збіги\n  2. Потім шукати за СИНОНІМАМИ\n  3. Потім шукати за ЧАСТКОВИМИ збігами\n  4. Фільтрувати за ФОРМОЮ товару\n  5. Сортувати за РЕЛЕВАНТНІСТЮ\n</FLEXIBLE_SEARCH>\n```\n\n### КРОК 3: ФІЛЬТРАЦІЯ ЗА ФОРМОЮ\n```xml\n<FORM_FILTERING>\n  ЯКЩО клієнт вказав форму:\n  - \"капсули\" → показати ТІЛЬКИ капсули\n  - \"мелений\" → показати ТІЛЬКИ мелений\n  - \"цілий\" → показати ТІЛЬКИ цілий/слайси/кусочки\n  \n  ЯКЩО форма НЕ вказана:\n  - Показати ВСІ форми знайденого гриба\n</FORM_FILTERING>\n```\n\n---\n\n## 📋 ПРАВИЛА ПОШУКУ\n\n### ПРІОРИТЕТНІСТЬ ПОШУКУ\n1. ТОЧНИЙ ЗБІГ назви + форми\n2. СИНОНІМ + точна форма  \n3. ЧАСТКОВІ ЗБІГИ з правильною формою\n4. СХОЖІ ТОВАРИ якщо нічого не знайдено\n\n### ОБРОБКА ПОШИРЕНИХ ЗАПИТІВ\n```xml\n<COMMON_QUERIES>\n  \"їжовичок мелений\" → шукати \"Їжовик. Герицій Мелений\"\n  \"мухоморчик капсули\" → шукати \"Мухоморчик Капсули\"  \n  \"рейшик\" → шукати \"Рейші\"\n  \"кордицепс 100г\" → шукати кордицепс 100 грам усіх форм\n  \"чага чай\" → шукати чагу в формі для чаю (кусочки/мелена)\n</COMMON_QUERIES>\n```\n\n### ЯКЩО НІЧОГО НЕ ЗНАЙДЕНО\n```xml\n<NO_RESULTS_HANDLING>\n  1. Перевірити чи правильно зрозумів назву\n  2. Запропонувати найближчі збіги\n  3. Показати популярні альтернативи\n  4. НЕ показувати нерелевантні товари\n</NO_RESULTS_HANDLING>\n```\n\n---\n\n## 📦 ФОРМАТ ВІДПОВІДІ\n\n### СТРУКТУРА ВІДПОВІДІ\n```\n📦 **Знайдені товари:**\n\n🍄 **[Назва товару]** ([форма], [вага]) - [ціна] грн\n↳ [Короткий опис властивостей]\n\n🍄 **[Назва товару]** ([форма], [вага]) - [ціна] грн  \n↳ [Короткий опис властивостей]\n```\n\n### ПРИКЛАДИ ПРАВИЛЬНИХ ВІДПОВІДЕЙ\n\nЗапит: \"їжовичок мелений 100г\"\n```\n📦 **Знайдені товари:**\n\n🍄 **Їжовик. Герицій Мелений** (мелений, 100 г) - 600 грн\n↳ Підтримує нервову систему, покращує пам'ять та концентрацію\n```\n\nЗапит: \"мухомор\"  \n```\n📦 **Знайдені товари:**\n\n🍄 **Мухоморчик Мелений** (мелений, 50 г) - 500 грн\n↳ Заспокоєння нервової системи, покращення сну\n\n🍄 **Мухоморчик Капсули** (капсули, 100 шт) - 625 грн\n↳ Зниження стресу, седативні властивості\n\n🍄 **Мухоморчик Цілий** (цілий, 50 г) - 500 грн\n↳ Природний адаптоген для нервової системи\n```\n\n---\n\n## ⚠️ КРИТИЧНІ ЗАБОРОНИ\nНЕ показувати нерелевантні товари (трійчатку замість їжовика). НЕ ігнорувати форму товару якщо вказана. НЕ показувати JSON - тільки читабельний формат. НЕ вигадувати товари яких немає в каталозі. НЕ показувати неправильні ціни.\n\n---\n\n## 🎯 ФІНАЛЬНА ПЕРЕВІРКА\nПеред відповіддю:\n1. Чи товар ВІДПОВІДАЄ запиту клієнта?\n2. Чи правильна ФОРМА товару?\n3. Чи точні ЦІНИ з каталогу?\n4. Чи зрозумілий ФОРМАТ відповіді?",
+              "role": "system"
+            },
+            {
+              "content": "=Запит: {{ $json.query }}\n\nТовар: Товар: Проаналізуй наступні товари: \n{{ $json.data.map(item => `ID: ${item.id}\nНазва: ${item.title}\nОпис: ${item.description}\nЦіна: ${item.price}\nФасування: ${item.units}\n---`).join('\\n') }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [400, 240],
+      "id": "491ffc0c-58a0-46fb-a4ba-8e1cc73567bd",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CRED_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [208, 240],
+      "id": "aeffc5f4-ea17-42c7-8abb-0f5edb961682",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e81c4572-fb5b-4ab5-b8bd-cd0f3ae8f618",
+              "name": "content",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [768, 240],
+      "id": "bb3ad5b6-07e9-4379-9174-528c7d78277a",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "клієнт потребує ціни на мухоморчик мелений 50 г, їжовичок (Герицій) мелений 100 г, кордицепс мелений 100 г"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "HTTP Request1": {
+      "main": [[{"node": "Merge1","type": "main","index": 1}]]
+    },
+    "Merge1": {
+      "main": [[{"node": "фільтрація","type": "main","index": 0}]]
+    },
+    "фільтрація": {
+      "main": [[{"node": "Merge","type": "main","index": 0}]]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [{"node": "Google Sheets","type": "main","index": 0}, {"node": "Merge2","type": "main","index": 1}]
+      ]
+    },
+    "Page 1": {
+      "main": [[{"node": "Merge1","type": "main","index": 0}]]
+    },
+    "Merge": {
+      "main": [[{"node": "OpenAI","type": "main","index": 0}]]
+    },
+    "Think": {
+      "ai_tool": [[{"node": "OpenAI","type": "ai_tool","index": 0}]]
+    },
+    "Google Sheets": {
+      "main": [[{"node": "фільтрація1","type": "main","index": 0}]]
+    },
+    "фільтрація1": {
+      "main": [[{"node": "Merge2","type": "main","index": 0}]]
+    },
+    "Merge2": {
+      "main": [[{"node": "OpenAI1","type": "main","index": 0}]]
+    },
+    "OpenAI1": {
+      "main": [[{"node": "Edit Fields","type": "main","index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cb6a1262-2241-4562-9d93-991d21040aa1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "S0b3Wu3ayLY7udBR",
+  "tags": []
+}

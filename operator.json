@@ -1,0 +1,1789 @@
+{
+  "name": "operator",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "name": "Telegram Trigger",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        0
+      ],
+      "id": "ca625972-e618-47db-83d0-d3678fc31d68",
+      "webhookId": "c4550aa5-f95f-464a-b86b-9a1d7d7a5afc",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_CRED_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "client_schema",
+          "mode": "list",
+          "cachedResultName": "client_schema"
+        },
+        "table": {
+          "__rl": true,
+          "value": "operators",
+          "mode": "list",
+          "cachedResultName": "operators"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.message?.chat?.id || $json.callback_query?.message?.chat?.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -480,
+        -128
+      ],
+      "id": "4ba1403d-56e5-4d0b-9fd0-c8852847e3e1",
+      "name": "Проверка на оператора",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -304,
+        -16
+      ],
+      "id": "530bf7a4-846e-4cbe-a932-802d7b3215f4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Данные от Telegram Trigger (убедись, что имя ноды указано точно)\nconst telegramData = $items(\"Telegram Trigger\")[0]?.json || {};\n\n// Данные из ноды \"Проверка на оператора\"\nconst operatorData = $items(\"Проверка на оператора\")[0]?.json || {};\n\n// Объединяем данные\nreturn [\n  {\n    json: {\n      ...telegramData,\n      operator_data: operatorData,\n      is_operator: !!operatorData.id // true, если найден оператор\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -16
+      ],
+      "id": "fa5e9dee-0408-4a51-9882-606a928682c4",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/lead",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "bd021b48-0da5-4af1-b3bf-59591053e4db"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Показати список лідів"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7dff6387-f54e-44c9-80d7-9de0f807a40a",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "main_menu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "На головну"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "56b9f72f-ad03-4528-a121-2e6063e8f8e8",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "category_agent_active",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "З ким спілкується агент зараз"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "467b3e91-ad36-457f-a017-21be22209054",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "lead_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Інфа про лід"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "02682c6b-bd25-4aed-9311-6dfeee199d51",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "disable_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Відключити вручну"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "06849908-f445-479e-b220-e4365b88a049",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "category_disabled_manual",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Меню відключенийх вручну лідів"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "00d3c4df-0f8e-4c62-8a8f-396b03edc8f8",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "enable_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ввімкнення ліда"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c96169de-f6a8-48eb-a8a3-4b1bbc3a1196",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "category_waiting_operator",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Показати список очікування оператора"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "95630a6d-1f25-4e8d-b324-4b0c5bab2da6",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "take_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Взяти клієнта"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "db587d1b-f630-4cb6-ae9a-c1b91a2601fa",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "finish_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Закінчити діалог"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e3604483-671d-4491-811f-e7a088a37098",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "page_agent_active_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Назад до списку (спілкуються з агентом)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "72ebf79b-83f1-4fbe-b7bc-d095a2222a48",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "page_waiting_operator_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Назад до списку (очікують оператора)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2495102e-924d-4cbf-b6a9-458e79326802",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "page_disabled_manual_",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Назад до списку (вимкнені вручну)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "fa82663a-0a21-4192-8378-e69b5110bb8a",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "refresh_agent_active",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "оновити агент спілкується"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f0290e91-48e8-4736-a642-edbb54f52d46",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "refresh_waiting_operator",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "оновити чекає оператора"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "49cec9a5-e242-404c-8e8c-44a171d092eb",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "refresh_disabled_manual",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "оновити вимкнених вручну"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e7c48c00-321e-4338-bb2c-63a85de2f98c",
+                    "leftValue": "={{ $json.callback_query.data }}",
+                    "rightValue": "close",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        128,
+        -304
+      ],
+      "id": "ac4fb992-5731-4f89-9b85-f73e384321ce",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Отримуємо дані про ліда з SQL та callback_query з попередніх нод\nconst lead = $input.first().json; // дані про ліда з SQL\nconst originalData = $('Code').first().json; // початкові дані з callback_query\n\n// Визначаємо контекст з callback_data\nlet context = 'agent_active'; // за замовчуванням\nconst originalCallback = originalData.callback_query?.data || '';\n\n// Витягуємо контекст з callback_data формату \"lead_context_external_id\"\nif (originalCallback.startsWith('lead_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts.slice(1, -1).join('_');\n    }\n} else if (originalCallback.startsWith('take_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts.slice(1, -1).join('_');\n    }\n} else if (originalCallback.startsWith('disable_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts.slice(1, -1).join('_');\n    }\n} else if (originalCallback.startsWith('finish_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts.slice(1, -1).join('_');\n    }\n} else if (originalCallback.startsWith('enable_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts.slice(1, -1).join('_');\n    }\n}\n\nconst messageId = originalData.callback_query.message.message_id;\nconst chatId = originalData.callback_query.message.chat.id;\n\nif (!lead || !lead.external_id) {\n    return {\n        chat_id: chatId,\n        message_id: messageId,\n        text: '❌ <b>Помилка</b>\\n\\nЛіда не знайдено',\n        reply_markup: {\n            inline_keyboard: [\n                [{ text: '⬅️ Назад до списку', callback_data: `page_${context}_0` }],\n                [{ text: '❌ Закрити список', callback_data: 'close' }]\n            ]\n        },\n        parse_mode: 'HTML'\n    };\n}\n\nlet firstName = '';\nlet username = '';\n\nif (lead.first_name && String(lead.first_name) !== 'undefined' && String(lead.first_name) !== 'null' && String(lead.first_name).trim() !== '') {\n    firstName = String(lead.first_name).trim();\n}\n\nif (lead.username && String(lead.username) !== 'undefined' && String(lead.username) !== 'null' && String(lead.username).trim() !== '') {\n    username = String(lead.username).trim();\n}\n\nlet displayName = '';\nif (firstName) {\n    displayName = firstName;\n} else if (username) {\n    displayName = username;\n} else {\n    displayName = `ID: ${String(lead.external_id).slice(-6)}`;\n}\n\nlet channelName = '';\nif (lead.channel_type === 'facebook') {\n    channelName = 'Фейсбук';\n} else if (lead.channel_type === 'instagram') {\n    channelName = 'Інстаграм';\n} else {\n    channelName = 'Чат';\n}\n\nlet agentStatus = '';\nif (lead.agent_disable_type === 'manual') {\n    agentStatus = '🔴 Відключений вручну';\n} else if (lead.agent_disable_type === 'temporary') {\n    agentStatus = '🟡 Тимчасово відключений';\n} else if (lead.agent_disabled) {\n    agentStatus = '🔴 Відключений';\n} else {\n    agentStatus = '🟢 Активний';\n}\n\nlet communicationStatus = '';\nif (lead.operator_connected && lead.connected_operator_name) {\n    communicationStatus = `👨‍💻 Спілкується з оператором ${lead.connected_operator_name}`;\n} else if (lead.waiting_for_operator) {\n    communicationStatus = '🔔 Очікує оператора';\n} else if (lead.agent_disable_type === 'manual') {\n    communicationStatus = '🚫 Агент відключений - не спілкується';\n} else if (lead.agent_disabled) {\n    communicationStatus = '🚫 Агент відключений';\n} else {\n    communicationStatus = '💬 Спілкується з ботом';\n}\n\nlet callReason = '';\nif (lead.last_message_from) {\n    switch (lead.last_message_from) {\n        case 'purchase_ready':\n            callReason = '💰 Готовий до покупки';\n            break;\n        case 'complaint':\n            callReason = '😡 Скарга';\n            break;\n        case 'support':\n            callReason = '🆘 Потрібна підтримка';\n            break;\n        case 'question':\n            callReason = '❓ Питання';\n            break;\n        case 'problem':\n            callReason = '⚠️ Проблема';\n            break;\n        case 'operator_request':\n            callReason = '👤 Запросив оператора';\n            break;\n        default:\n            callReason = `💬 ${lead.last_message_from}`;\n    }\n}\n\nlet lastActivity = new Date(lead.last_activity_at).toLocaleString('uk-UA');\nlet createdAt = new Date(lead.created_at).toLocaleString('uk-UA');\n\nlet messageText = `👤 <b>Інформація про ліда</b>\\n\\n`;\nmessageText += `<b>Канал:</b> ${channelName}\\n`;\nif (displayName) {\n    messageText += `<b>Ім'я:</b> ${displayName}\\n`;\n}\nif (username && username !== displayName) {\n    messageText += `<b>Username:</b> @${username}\\n`;\n}\nmessageText += `<b>ID:</b> <code>${lead.external_id}</code>\\n`;\nmessageText += `\\n<b>Статус агента:</b> ${agentStatus}\\n`;\nmessageText += `<b>Статус:</b> ${communicationStatus}\\n`;\n\nif (lead.operator_connected && lead.operator_connected_at) {\n    const connectedAt = new Date(lead.operator_connected_at).toLocaleString('uk-UA');\n    messageText += `<b>Підключено:</b> ${connectedAt}\\n`;\n}\n\nif (callReason) {\n    messageText += `<b>Причина звернення:</b> ${callReason}\\n`;\n}\nmessageText += `\\n<b>Остання активність:</b> ${lastActivity}\\n`;\nmessageText += `<b>Створено:</b> ${createdAt}`;\n\nlet keyboard = [];\nlet actionRow = [];\n\nif (lead.agent_disable_type === 'manual') {\n    actionRow.push({ text: '🟢 Включити агента', callback_data: `enable_${context}_${lead.external_id}` });\n} else if (lead.operator_connected && lead.connected_operator_name) {\n    actionRow.push(\n        { text: '🏁 Завершити діалог', callback_data: `finish_${context}_${lead.external_id}` },\n        { text: '🔴 Відключити вручну', callback_data: `disable_${context}_${lead.external_id}` }\n    );\n} else if (lead.waiting_for_operator) {\n    actionRow.push({ text: '✋ Взяти клієнта', callback_data: `take_${context}_${lead.external_id}` });\n    actionRow.push({ text: '🔴 Відключити вручну', callback_data: `disable_${context}_${lead.external_id}` });\n} else {\n    actionRow.push({ text: '🔴 Відключити вручну', callback_data: `disable_${context}_${lead.external_id}` });\n}\n\nif (actionRow.length > 0) {\n    keyboard.push(actionRow);\n}\n\nkeyboard.push([\n    { text: '⬅️ Назад до списку', callback_data: `page_${context}_0` },\n    { text: '🏠 Головна', callback_data: 'main_menu' }\n]);\n\nkeyboard.push([\n    { text: '❌ Закрити список', callback_data: 'close' }\n]);\n\nreturn {\n    chat_id: chatId,\n    message_id: messageId,\n    text: messageText,\n    reply_markup: { inline_keyboard: keyboard },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        368
+      ],
+      "id": "5a27b315-bd29-4794-b647-9e00cd50752b",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Отримуємо дані з входящого потоку\nconst inputData = $input.all();\nconst lead = inputData[0].json;\nconst callbackData = inputData[1] ? inputData[1].json : $json;\n\nlet context = 'agent_active';\nconst originalCallback = callbackData.callback_query?.data || '';\n\nif (originalCallback.startsWith('lead_')) {\n    const parts = originalCallback.split('_');\n    if (parts.length >= 3) {\n        context = parts[1];\n    }\n} else if (lead && lead.external_id) {\n    if (lead.agent_disable_type === 'manual') {\n        context = 'disabled_manual';\n    } else if (lead.waiting_for_operator || lead.operator_connected) {\n        context = 'waiting_operator';\n    } else {\n        context = 'agent_active';\n    }\n}\n\nlet messageId = null;\nlet chatId = null;\n\ntry {\n    if (callbackData.callback_query) {\n        messageId = callbackData.callback_query.message.message_id;\n        chatId = callbackData.callback_query.message.chat.id;\n    } else if (callbackData.message) {\n        messageId = callbackData.message.message_id;\n        chatId = callbackData.message.chat.id;\n    }\n} catch (error) {\n    console.error('Error getting message/chat ID:', error);\n}\n\nif (!lead || !lead.external_id) {\n    const errorResult = {\n        text: '❌ <b>Помилка</b>\\n\\nЛіда не знайдено',\n        reply_markup: {\n            inline_keyboard: [\n                [{\n                    text: '⬅️ Назад до списку',\n                    callback_data: `page_${context}_0`\n                }],\n                [{\n                    text: '❌ Закрити список',\n                    callback_data: 'close'\n                }]\n            ]\n        },\n        parse_mode: 'HTML'\n    };\n    \n    if (messageId && chatId) {\n        errorResult.chat_id = chatId;\n        errorResult.message_id = messageId;\n    }\n    \n    return errorResult;\n}\n\nlet firstName = '';\nlet username = '';\n\nif (lead.first_name && \n    String(lead.first_name) !== 'undefined' && \n    String(lead.first_name) !== 'null' && \n    String(lead.first_name).trim() !== '') {\n    firstName = String(lead.first_name).trim();\n}\n\nif (lead.username && \n    String(lead.username) !== 'undefined' && \n    String(lead.username) !== 'null' && \n    String(lead.username).trim() !== '') {\n    username = String(lead.username).trim();\n}\n\nlet displayName = '';\nif (firstName) {\n    displayName = firstName;\n} else if (username) {\n    displayName = username;\n} else {\n    displayName = `ID: ${String(lead.external_id).slice(-6)}`;\n}\n\nlet channelName = '';\nif (lead.channel_type === 'facebook') {\n    channelName = 'Фейсбук';\n} else if (lead.channel_type === 'instagram') {\n    channelName = 'Інстаграм';\n} else {\n    channelName = 'Чат';\n}\n\nlet agentStatus = '';\nif (lead.agent_disable_type === 'manual') {\n    agentStatus = '🔴 Відключений вручну';\n} else if (lead.agent_disable_type === 'temporary') {\n    agentStatus = '🟡 Тимчасово відключений';\n} else if (lead.agent_disabled) {\n    agentStatus = '🔴 Відключений';\n} else {\n    agentStatus = '🟢 Активний';\n}\n\nlet operatorStatus = '';\nif (lead.operator_connected && lead.connected_operator_name) {\n    operatorStatus = `👨‍💻 Спілкується з оператором ${lead.connected_operator_name}`;\n} else if (lead.waiting_for_operator) {\n    operatorStatus = '🔔 Очікує оператора';\n} else if (lead.agent_disable_type === 'manual') {\n    operatorStatus = '🚫 Агент відключений - не спілкується';\n} else if (lead.agent_disabled) {\n    operatorStatus = '🚫 Агент відключений';\n} else {\n    operatorStatus = '💬 Спілкується з ботом';\n}\n\nlet callReason = '';\nif (lead.last_message_from) {\n    switch (lead.last_message_from) {\n        case 'purchase_ready':\n            callReason = '💰 Готовий до покупки';\n            break;\n        case 'complaint':\n            callReason = '😡 Скарга';\n            break;\n        case 'support':\n            callReason = '🆘 Потрібна підтримка';\n            break;\n        case 'question':\n            callReason = '❓ Питання';\n            break;\n        case 'problem':\n            callReason = '⚠️ Проблема';\n            break;\n        case 'operator_request':\n            callReason = '👤 Запросив оператора';\n            break;\n        default:\n            callReason = `💬 ${lead.last_message_from}`;\n    }\n}\n\nlet lastActivity = new Date(lead.last_activity_at).toLocaleString('uk-UA');\nlet createdAt = new Date(lead.created_at).toLocaleString('uk-UA');\n\nlet messageText = `👤 <b>Інформація про ліда</b>\\n\\n`;\nmessageText += `<b>Канал:</b> ${channelName}\\n`;\nif (displayName) {\n    messageText += `<b>Ім'я:</b> ${displayName}\\n`;\n}\nif (username && username !== displayName) {\n    messageText += `<b>Username:</b> @${username}\\n`;\n}\nmessageText += `<b>ID:</b> <code>${lead.external_id}</code>\\n`;\nmessageText += `\\n<b>Статус агента:</b> ${agentStatus}\\n`;\nmessageText += `<b>Статус:</b> ${operatorStatus}\\n`;\n\nif (lead.operator_connected && lead.operator_connected_at) {\n    const connectedAt = new Date(lead.operator_connected_at).toLocaleString('uk-UA');\n    messageText += `<b>Підключено:</b> ${connectedAt}\\n`;\n}\n\nif (callReason) {\n    messageText += `<b>Причина звернення:</b>\\n<code>${callReason}</code>\\n`;\n}\nmessageText += `\\n<b>Остання активність:</b> ${lastActivity}\\n`;\nmessageText += `<b>Створено:</b> ${createdAt}`;\n\nlet keyboard = [];\nlet actionRow = [];\n\nif (lead.agent_disable_type === 'manual') {\n    actionRow.push({ text: '🟢 Включити агента', callback_data: `enable_${lead.external_id}` });\n} else if (lead.operator_connected && lead.connected_operator_name) {\n    actionRow.push(\n        { text: '🏁 Завершити діалог', callback_data: `finish_${lead.external_id}` },\n        { text: '🔴 Відключити вручну', callback_data: `disable_${lead.external_id}` }\n    );\n} else if (lead.waiting_for_operator) {\n    actionRow.push({ text: '✋ Взяти клієнта', callback_data: `take_${context}_${lead.external_id}` });\n    actionRow.push({ text: '🔴 Відключити вручну', callback_data: `disable_${lead.external_id}` });\n} else {\n    actionRow.push({ text: '🔴 Відключити вручну', callback_data: `disable_${lead.external_id}` });\n}\n\nif (actionRow.length > 0) {\n    keyboard.push(actionRow);\n}\n\nkeyboard.push([\n    {\n        text: '⬅️ Назад до списку',\n        callback_data: `page_${context}_0`\n    },\n    {\n        text: '🏠 Головна',\n        callback_data: 'main_menu'\n    }\n]);\n\nkeyboard.push([\n    {\n        text: '❌ Закрити список',\n        callback_data: 'close'\n    }\n]);\n\nconst result = {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};\n\nif (messageId && chatId) {\n    result.chat_id = chatId;\n    result.message_id = messageId;\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -288
+      ],
+      "id": "b71fb0ad-4d39-4009-8344-27b1356587f0",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').item.json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Switch').item.json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ $json.reply_markup }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        -288
+      ],
+      "id": "ddaab410-e7bd-460c-bfae-650f834f26f7",
+      "name": "Отправка инфы"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    channel_type,\n    username,\n    first_name,\n    waiting_for_operator,\n    agent_disabled,\n    agent_disable_type,\n    last_activity_at,\n    last_message_from,\n    created_at,\n    channel_id,\n    operator_connected,\n    connected_operator_name,\n    operator_connected_at\nFROM client_schema.leads \nWHERE external_id = '{{ $json.callback_query.data.split(\"_\").pop() }}'\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        -288
+      ],
+      "id": "294ebc1a-d3be-4118-9c14-6702a399179f",
+      "name": "Показати інфу",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формуємо головне меню категорій лідів\nlet messageText = `📋 <b>Список лідів</b>\\n\\n`;\nmessageText += `Оберіть категорію:`;\n\n// Створюємо кнопки категорій\nlet keyboard = [];\n\n// Кнопка \"З кем спілкується агент зараз\"\nkeyboard.push([{\n    text: '🤖 З ким спілкується агент зараз',\n    callback_data: 'category_agent_active'\n}]);\n\n// Кнопка \"Клієнти, що очікують оператора\"\nkeyboard.push([{\n    text: '👤 Клієнти, що очікують оператора',\n    callback_data: 'category_waiting_operator'\n}]);\n\n// Кнопка \"Відключені вручну клієнти\"\nkeyboard.push([{\n    text: '🔴 Відключені вручну клієнти',\n    callback_data: 'category_disabled_manual'\n}]);\n\n// Кнопка \"Закрити список\"\nkeyboard.push([{\n    text: '❌ Закрити список',\n    callback_data: 'close'\n}]);\n\n// Повертаємо результат\nreturn {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -880
+      ],
+      "id": "6ebbfe9e-b749-4e0e-a7ca-f9d66054c141",
+      "name": "Формуємо список"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').item.json.id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        -880
+      ],
+      "id": "43a3913a-037f-41b2-a01b-26ca3ccb3390",
+      "name": "Відправка списку двух категорій"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    channel_type,\n    username,\n    first_name,\n    waiting_for_operator,\n    agent_disabled,\n    agent_disable_type,\n    last_activity_at,\n    last_message_from,\n    created_at,\n    operator_connected,\n    connected_operator_name,\n    COUNT(*) OVER() as total_count\nFROM client_schema.leads \nWHERE agent_disabled = false \n    AND waiting_for_operator = false\n    AND last_activity_at >= NOW() - INTERVAL '2 hours'\nORDER BY last_activity_at DESC\nLIMIT 10 OFFSET {{ ($json.callback_query.data.startsWith('refresh_') ? 0 : parseInt($json.callback_query.data.split('_').pop()) * 10) || 0 }};",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        -608
+      ],
+      "id": "4b495b6d-152c-4679-b737-554a3abe9acd",
+      "name": "Отримання з ким спілкується агент",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Отримуємо всі ітеми з Postgres\nconst allItems = $input.all();\nconst leads = allItems.map(item => item.json);\n\nconst hasRealData = leads.length > 0 && leads[0] && leads[0].external_id;\nconst callbackData = $('Code').first().json.callback_query?.data || '';\n\nconst context = 'agent_active';\nlet currentPage = 0;\n\nif (callbackData === 'refresh_agent_active') {\n    currentPage = 0;\n} else if (callbackData.startsWith('page_agent_active_')) {\n    currentPage = parseInt(callbackData.split('_').pop()) || 0;\n}\n\nconst totalCount = hasRealData ? (leads[0].total_count || 0) : 0;\nconst totalPages = Math.ceil(totalCount / 10);\n\nfunction formatActivityTime(dateString) {\n    if (!dateString) return '';\n    \n    const activityDate = new Date(dateString);\n    const now = new Date();\n    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());\n    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);\n    const activityDay = new Date(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());\n    \n    const timeString = activityDate.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });\n    \n    if (activityDay.getTime() === today.getTime()) {\n        return `🕐 ${timeString}`;\n    } else if (activityDay.getTime() === yesterday.getTime()) {\n        return `📅 Вчора ${timeString}`;\n    } else {\n        const dateString = activityDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });\n        return `📅 ${dateString} ${timeString}`;\n    }\n}\n\nlet keyboard = [];\n\nif (hasRealData && totalCount > 0) {\n    leads.forEach((lead, index) => {\n        try {\n            if (!lead || !lead.external_id) return;\n            \n            let firstName = '';\n            let username = '';\n            \n            if (lead.first_name && \n                String(lead.first_name) !== 'undefined' && \n                String(lead.first_name) !== 'null' && \n                String(lead.first_name).trim() !== '') {\n                firstName = String(lead.first_name).trim();\n            }\n            \n            if (lead.username && \n                String(lead.username) !== 'undefined' && \n                String(lead.username) !== 'null' && \n                String(lead.username).trim() !== '') {\n                username = String(lead.username).trim();\n            }\n            \n            let activityTime = formatActivityTime(lead.last_activity_at);\n            let displayName = '';\n            if (firstName) {\n                displayName = firstName;\n            } else if (username) {\n                displayName = username;\n            } else {\n                if (lead.channel_type === 'facebook') {\n                    displayName = activityTime || `ID: ${String(lead.external_id).slice(-6)}`;\n                } else {\n                    displayName = `ID: ${String(lead.external_id).slice(-6)}`;\n                }\n            }\n            \n            let channelName = '';\n            if (lead.channel_type === 'facebook') {\n                channelName = displayName ? `Фейсбук - ${displayName}` : 'Фейсбук';\n            } else if (lead.channel_type === 'instagram') {\n                channelName = displayName ? `Інстаграм - ${displayName}` : 'Інстаграм';\n            } else {\n                channelName = displayName ? `Чат - ${displayName}` : 'Чат';\n            }\n            \n            if (activityTime && !(lead.channel_type === 'facebook' && !firstName && !username)) {\n                channelName += `\\n${activityTime}`;\n            }\n            \n            const buttonData = {\n                text: channelName,\n                callback_data: `lead_${context}_${lead.external_id}`\n            };\n            \n            keyboard.push([buttonData]);\n            \n        } catch (error) {\n            console.error(`Error processing lead ${index}:`, error);\n        }\n    });\n}\n\nif (totalPages > 1) {\n    let navigationRow = [];\n    if (currentPage > 0) {\n        navigationRow.push({\n            text: '⬅️ Назад',\n            callback_data: `page_agent_active_${currentPage - 1}`\n        });\n    }\n    if (currentPage < totalPages - 1) {\n        navigationRow.push({\n            text: 'Далі ➡️',\n            callback_data: `page_agent_active_${currentPage + 1}`\n        });\n    }\n    if (navigationRow.length > 0) {\n        keyboard.push(navigationRow);\n    }\n}\n\nkeyboard.push([\n    {\n        text: '🔄 Оновити',\n        callback_data: `refresh_${context}`\n    },\n    {\n        text: '🏠 Головна',\n        callback_data: 'main_menu'\n    }\n]);\n\nkeyboard.push([{\n    text: '❌ Закрити список',\n    callback_data: 'close'\n}]);\n\nconst updateTime = new Date().toLocaleString('uk-UA', {\n    timeZone: 'Europe/Kiev'\n});\n\nlet messageText = '';\n\nif (!hasRealData || totalCount === 0) {\n    messageText = `🤖 <b>З ким спілкується агент зараз</b>\\n\\n`;\n    messageText += `❌ <b>Немає активних клієнтів</b>\\n\\n`;\n    messageText += `За останні 2 години жоден клієнт не спілкувався з агентом.\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}`;\n} else {\n    const fromLead = currentPage * 10 + 1;\n    const toLead = Math.min((currentPage + 1) * 10, totalCount);\n    \n    messageText = `🤖 <b>З ким спілкується агент зараз</b>\\n\\n`;\n    messageText += `Сторінка: ${currentPage + 1} з ${totalPages}\\n`;\n    messageText += `Ліди: ${fromLead}-${toLead} з ${totalCount}\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}`;\n}\n\nreturn {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -608
+      ],
+      "id": "b2a5eb82-c3f5-4b73-85c8-a0f0d7c56467",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        -608
+      ],
+      "id": "3d3be363-2639-4c2c-af67-310265262a4e",
+      "name": "Отправка списку"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').item.json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Switch').item.json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ $json.reply_markup }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        -736
+      ],
+      "id": "89fb206e-b5cf-4fc2-bcfe-fd4863e7708b",
+      "name": "Відправка списку двух категорій1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE client_schema.leads \nSET \n    agent_disabled = true,\n    agent_disable_type = 'manual',\n    waiting_for_operator = false,\n    operator_connected = false,\n    connected_operator_id = NULL,\n    connected_operator_name = NULL,\n    operator_connected_at = NULL,\n    updated_at = NOW()\nWHERE external_id = '{{ $json.callback_query.data.split(\"_\").pop() }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        -448
+      ],
+      "id": "c8b0f378-9bea-43a0-813f-90f6409eb178",
+      "name": "Вручную отключить клиента",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные из ноды \"Code\" для callback_query\nconst codeData = $('Code').first().json;\nconst callbackData = codeData.callback_query.data;\nconst leadId = callbackData.split('_')[1];\nconst msgId = codeData.callback_query.message.message_id;\nconst chatId = codeData.callback_query.message.chat.id;\n\nconst leadData = $input.first().json;\n\nlet clientName = '';\nif (leadData.first_name && \n    String(leadData.first_name) !== 'undefined' && \n    String(leadData.first_name) !== 'null' && \n    String(leadData.first_name).trim() !== '') {\n    clientName = String(leadData.first_name).trim();\n} else if (leadData.username && \n    String(leadData.username) !== 'undefined' && \n    String(leadData.username) !== 'null' && \n    String(leadData.username).trim() !== '') {\n    clientName = String(leadData.username).trim();\n} else {\n    clientName = `ID: ${leadId}`;\n}\n\nconst notificationText = `✅ <b>Клієнта відключено</b>\\n\\nАгент для клієнта <b>${clientName}</b> (<code>${leadId}</code>) успішно відключений вручну.\\n\\nКлієнт більше не буде отримувати автоматичні відповіді від бота.`;\n\nconst buttons = [\n    [{ text: '🏠 Головна', callback_data: 'main_menu' }],\n    [{ text: '❌ Закрити список', callback_data: 'close' }]\n];\n\nreturn {\n    chat_id: chatId,\n    message_id: msgId,\n    text: notificationText,\n    reply_markup: { inline_keyboard: buttons },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -448
+      ],
+      "id": "d90fd8c2-6d91-47b9-b937-1532fddba7e1",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    channel_type,\n    username,\n    first_name,\n    waiting_for_operator,\n    agent_disabled,\n    agent_disable_type,\n    last_activity_at,\n    last_message_from,\n    created_at,\n    updated_at,\n    COUNT(*) OVER() as total_count\nFROM client_schema.leads \nWHERE agent_disable_type = 'manual'\nORDER BY updated_at DESC\nLIMIT 10 OFFSET {{ ($json.callback_query.data.startsWith('refresh_') ? 0 : parseInt($json.callback_query.data.split('_').pop()) * 10) || 0 }};",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        -128
+      ],
+      "id": "7d445313-b129-4f10-b511-2553784de555",
+      "name": "Список лідів вимкнутих вручну",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst leads = allItems.map(item => item.json);\nconst hasRealData = leads.length > 0 && leads[0] && leads[0].external_id;\nconst callbackData = $('Code').first().json.callback_query?.data || '';\n\nconst context = 'disabled_manual';\nlet currentPage = 0;\n\nif (callbackData === 'refresh_disabled_manual') {\n    currentPage = 0;\n} else if (callbackData.startsWith('page_disabled_manual_')) {\n    currentPage = parseInt(callbackData.split('_')[3]) || 0;\n}\n\nconst totalCount = hasRealData ? (leads[0].total_count || leads.length) : 0;\nconst totalPages = Math.ceil(totalCount / 10);\n\nfunction formatActivityTime(dateString) {\n    if (!dateString) return '';\n    const activityDate = new Date(dateString);\n    const now = new Date();\n    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());\n    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);\n    const activityDay = new Date(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());\n    const timeString = activityDate.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });\n    \n    if (activityDay.getTime() === today.getTime()) {\n        return `🕐 ${timeString}`;\n    } else if (activityDay.getTime() === yesterday.getTime()) {\n        return `📅 Вчора ${timeString}`;\n    } else {\n        const dateString = activityDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });\n        return `📅 ${dateString} ${timeString}`;\n    }\n}\n\nlet keyboard = [];\n\nif (hasRealData && totalCount > 0) {\n    leads.forEach((lead, index) => {\n        try {\n            if (!lead || !lead.external_id) return;\n            \n            let firstName = '';\n            let username = '';\n            \n            if (lead.first_name && \n                String(lead.first_name) !== 'undefined' && \n                String(lead.first_name) !== 'null' && \n                String(lead.first_name).trim() !== '') {\n                firstName = String(lead.first_name).trim();\n            }\n            \n            if (lead.username && \n                String(lead.username) !== 'undefined' && \n                String(lead.username) !== 'null' && \n                String(lead.username).trim() !== '') {\n                username = String(lead.username).trim();\n            }\n            \n            let emoji = '🔴 ';\n            let activityTime = formatActivityTime(lead.last_activity_at);\n            let displayName = '';\n            \n            if (firstName) {\n                displayName = firstName;\n            } else if (username) {\n                displayName = username;\n            } else {\n                if (lead.channel_type === 'facebook') {\n                    displayName = activityTime || `ID: ${String(lead.external_id).slice(-6)}`;\n                } else {\n                    displayName = `ID: ${String(lead.external_id).slice(-6)}`;\n                }\n            }\n            \n            let channelName = '';\n            if (lead.channel_type === 'facebook') {\n                channelName = displayName ? `Фейсбук - ${displayName}` : 'Фейсбук';\n            } else if (lead.channel_type === 'instagram') {\n                channelName = displayName ? `Інстаграм - ${displayName}` : 'Інстаграм';\n            } else {\n                channelName = displayName ? `Чат - ${displayName}` : 'Чат';\n            }\n            \n            if (activityTime && !(lead.channel_type === 'facebook' && !firstName && !username)) {\n                channelName += `\\n${activityTime}`;\n            }\n            \n            const buttonData = {\n                text: `${emoji}${channelName}`,\n                callback_data: `lead_${context}_${lead.external_id}`\n            };\n            \n            keyboard.push([buttonData]);\n            \n        } catch (error) {\n            console.error(`Error processing lead ${index}:`, error);\n        }\n    });\n\n    if (totalPages > 1) {\n        let navigationRow = [];\n        if (currentPage > 0) {\n            navigationRow.push({\n                text: '⬅️ Назад',\n                callback_data: `page_${context}_${currentPage - 1}`\n            });\n        }\n        if (currentPage < totalPages - 1) {\n            navigationRow.push({\n                text: 'Далі ➡️',\n                callback_data: `page_${context}_${currentPage + 1}`\n            });\n        }\n        if (navigationRow.length > 0) {\n            keyboard.push(navigationRow);\n        }\n    }\n}\n\nkeyboard.push([\n    {\n        text: '🔄 Оновити',\n        callback_data: `refresh_${context}`\n    },\n    {\n        text: '🏠 Головна',\n        callback_data: 'main_menu'\n    }\n]);\n\nkeyboard.push([{\n    text: '❌ Закрити список',\n    callback_data: 'close'\n}]);\n\nconst updateTime = new Date().toLocaleString('uk-UA', {\n    timeZone: 'Europe/Kiev'\n});\n\nlet messageText = '';\n\nif (!hasRealData || totalCount === 0) {\n    messageText = `🔴 <b>Відключені вручну клієнти</b>\\n\\n`;\n    messageText += `❌ <b>Немає відключених вручну лідів</b>\\n\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}`;\n} else {\n    const fromLead = currentPage * 10 + 1;\n    const toLead = Math.min((currentPage + 1) * 10, totalCount);\n    \n    messageText = `🔴 <b>Відключені вручну клієнти</b>\\n\\n`;\n    messageText += `Сторінка: ${currentPage + 1} з ${totalPages}\\n`;\n    messageText += `Ліди: ${fromLead}-${toLead} з ${totalCount}\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}\\n\\n`;\n    messageText += `🔴 - агент відключений вручну`;\n}\n\nreturn {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        -128
+      ],
+      "id": "9c02281c-55e6-44ee-aa05-27535ebefdaf",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    first_name,\n    username,\n    channel_type\nFROM client_schema.leads \nWHERE external_id = '{{ $('Code').first().json.callback_query.data.split(\"_\").pop() }}'\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1072,
+        -448
+      ],
+      "id": "4f51ba22-f7ab-4e37-a90e-150aa6a15c76",
+      "name": "Данні",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формуємо головне меню категорій лідів\nlet messageText = `📋 <b>Список лідів</b>\\n\\n`;\nmessageText += `Оберіть категорію:`;\n\nlet keyboard = [];\n\nkeyboard.push([{\n    text: '🤖 З ким спілкується агент зараз',\n    callback_data: 'category_agent_active'\n}]);\n\nkeyboard.push([{\n    text: '👤 Клієнти, що очікують оператора',\n    callback_data: 'category_waiting_operator'\n}]);\n\nkeyboard.push([{\n    text: '🔴 Відключені вручну клієнти',\n    callback_data: 'category_disabled_manual'\n}]);\n\nkeyboard.push([{\n    text: '❌ Закрити список',\n    callback_data: 'close'\n}]);\n\nreturn {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -736
+      ],
+      "id": "b1d22333-4eb5-4b3d-98e1-940727706aa6",
+      "name": "Формуємо список (головне меню)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE client_schema.leads \nSET \n    agent_disabled = false,\n    agent_disable_type = NULL,\n    updated_at = NOW()\nWHERE external_id = '{{ $json.callback_query.data.split(\"_\").pop() }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        48
+      ],
+      "id": "411f6232-094b-4553-9a02-10580df160b9",
+      "name": "Ввімкнення вручну ліда",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const codeData = $('Code').first().json;\nconst callbackData = codeData.callback_query.data;\nconst leadId = callbackData.split('_')[1];\nconst msgId = codeData.callback_query.message.message_id;\nconst chatId = codeData.callback_query.message.chat.id;\nconst leadData = $input.first().json;\n\nlet clientName = '';\nif (leadData.first_name && \n    String(leadData.first_name) !== 'undefined' && \n    String(leadData.first_name) !== 'null' && \n    String(leadData.first_name).trim() !== '') {\n    clientName = String(leadData.first_name).trim();\n} else if (leadData.username && \n    String(leadData.username) !== 'undefined' && \n    String(leadData.username) !== 'null' && \n    String(leadData.username).trim() !== '') {\n    clientName = String(leadData.username).trim();\n} else {\n    clientName = `ID: ${leadId}`;\n}\n\nconst notificationText = `✅ <b>Агента включено</b>\\n\\nАгент для клієнта <b>${clientName}</b> (<code>${leadId}</code>) успішно включений.\\n\\nКлієнт знову буде отримувати автоматичні відповіді від бота.`;\n\nconst buttons = [\n    [{ text: '🏠 Головна', callback_data: 'main_menu' }],\n    [{ text: '❌ Закрити список', callback_data: 'close' }]\n];\n\nreturn {\n    chat_id: chatId,\n    message_id: msgId,\n    text: notificationText,\n    reply_markup: { inline_keyboard: buttons },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        48
+      ],
+      "id": "be55c3a2-a4e2-4099-bae8-0454a5a8843a",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    first_name,\n    username,\n    channel_type\nFROM client_schema.leads \nWHERE external_id = '{{ $('Code').first().json.callback_query.data.split(\"_\").pop() }}'\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1072,
+        48
+      ],
+      "id": "925520db-8c94-4078-8325-3dfcae66a096",
+      "name": "Данні1",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    channel_type,\n    username,\n    first_name,\n    waiting_for_operator,\n    agent_disabled,\n    agent_disable_type,\n    last_activity_at,\n    last_message_from,\n    created_at,\n    operator_connected,\n    connected_operator_name,\n    COUNT(*) OVER() as total_count\nFROM client_schema.leads \nWHERE (waiting_for_operator = true OR operator_connected = true)\nORDER BY last_activity_at ASC\nLIMIT 10 OFFSET {{ ($json.callback_query.data.startsWith('refresh_') ? 0 : parseInt($json.callback_query.data.split('_').pop()) * 10) || 0 }};",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        208
+      ],
+      "id": "caf93a3c-0b46-4052-a38f-7f19767254a0",
+      "name": "Список очікування оператора",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst leads = allItems.map(item => item.json);\n\nconst hasRealData = leads.length > 0 && leads[0] && leads[0].external_id;\nconst callbackData = $('Code').first().json.callback_query?.data || '';\n\nconst context = 'waiting_operator';\nlet currentPage = 0;\n\nif (callbackData === 'refresh_waiting_operator') {\n    currentPage = 0;\n} else if (callbackData.startsWith('page_waiting_operator_')) {\n    currentPage = parseInt(callbackData.split('_')[3]) || 0;\n}\n\nconst totalCount = hasRealData ? (leads[0].total_count || leads.length) : 0;\nconst totalPages = Math.ceil(totalCount / 10);\n\nfunction formatActivityTime(dateString) {\n    if (!dateString) return '';\n    const activityDate = new Date(dateString);\n    const now = new Date();\n    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());\n    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);\n    const activityDay = new Date(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());\n    const timeString = activityDate.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });\n    \n    if (activityDay.getTime() === today.getTime()) {\n        return `🕐 ${timeString}`;\n    } else if (activityDay.getTime() === yesterday.getTime()) {\n        return `📅 Вчора ${timeString}`;\n    } else {\n        const dateString = activityDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });\n        return `📅 ${dateString} ${timeString}`;\n    }\n}\n\nlet keyboard = [];\n\nif (hasRealData && totalCount > 0) {\n    leads.forEach((lead, index) => {\n        try {\n            if (!lead || !lead.external_id) return;\n            \n            let firstName = '';\n            let username = '';\n            \n            if (lead.first_name && \n                String(lead.first_name) !== 'undefined' && \n                String(lead.first_name) !== 'null' && \n                String(lead.first_name).trim() !== '') {\n                firstName = String(lead.first_name).trim();\n            }\n            \n            if (lead.username && \n                String(lead.username) !== 'undefined' && \n                String(lead.username) !== 'null' && \n                String(lead.username).trim() !== '') {\n                username = String(lead.username).trim();\n            }\n            \n            let emoji = '';\n            if (lead.agent_disable_type === 'manual') {\n                emoji = '🔴 ';\n            }\n            \n            if (lead.operator_connected) {\n                emoji += '👨‍💻 ';\n            } else if (lead.waiting_for_operator) {\n                emoji += '🔔 ';\n            }\n            \n            let activityTime = formatActivityTime(lead.last_activity_at);\n            let displayName = '';\n            if (firstName) {\n                displayName = firstName;\n            } else if (username) {\n                displayName = username;\n            } else {\n                if (lead.channel_type === 'facebook') {\n                    displayName = activityTime || `ID: ${String(lead.external_id).slice(-6)}`;\n                } else {\n                    displayName = `ID: ${String(lead.external_id).slice(-6)}`;\n                }\n            }\n            \n            let channelName = '';\n            if (lead.channel_type === 'facebook') {\n                channelName = displayName ? `Фейсбук - ${displayName}` : 'Фейсбук';\n            } else if (lead.channel_type === 'instagram') {\n                channelName = displayName ? `Інстаграм - ${displayName}` : 'Інстаграм';\n            } else {\n                channelName = displayName ? `Чат - ${displayName}` : 'Чат';\n            }\n            \n            if (activityTime && !(lead.channel_type === 'facebook' && !firstName && !username)) {\n                channelName += `\\n${activityTime}`;\n            }\n            \n            const buttonData = {\n                text: `${emoji}${channelName}`,\n                callback_data: `lead_${context}_${lead.external_id}`\n            };\n            \n            keyboard.push([buttonData]);\n            \n        } catch (error) {\n            console.error(`Error processing lead ${index}:`, error);\n            keyboard.push([{\n                text: `❌ Помилка ліда ${index}`,\n                callback_data: `lead_${context}_${lead.external_id || 'unknown'}`\n            }]);\n        }\n    });\n\n    if (totalPages > 1) {\n        let navigationRow = [];\n        if (currentPage > 0) {\n            navigationRow.push({\n                text: '⬅️ Назад',\n                callback_data: `page_${context}_${currentPage - 1}`\n            });\n        }\n        if (currentPage < totalPages - 1) {\n            navigationRow.push({\n                text: 'Далі ➡️',\n                callback_data: `page_${context}_${currentPage + 1}`\n            });\n        }\n        if (navigationRow.length > 0) {\n            keyboard.push(navigationRow);\n        }\n    }\n}\n\nkeyboard.push([\n    {\n        text: '🔄 Оновити',\n        callback_data: `refresh_${context}`\n    },\n    {\n        text: '🏠 Головна',\n        callback_data: 'main_menu'\n    }\n]);\n\nkeyboard.push([{\n    text: '❌ Закрити список',\n    callback_data: 'close'\n}]);\n\nconst updateTime = new Date().toLocaleString('uk-UA', {\n    timeZone: 'Europe/Kiev'\n});\n\nlet messageText = '';\n\nif (!hasRealData || totalCount === 0) {\n    messageText = `👤 <b>Клієнти, що очікують оператора</b>\\n\\n`;\n    messageText += `❌ <b>Немає клієнтів в очікуванні</b>\\n\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}`;\n} else {\n    const fromLead = currentPage * 10 + 1;\n    const toLead = Math.min((currentPage + 1) * 10, totalCount);\n    \n    messageText = `👤 <b>Клієнти, що очікують оператора</b>\\n\\n`;\n    messageText += `Сторінка: ${currentPage + 1} з ${totalPages}\\n`;\n    messageText += `Ліди: ${fromLead}-${toLead} з ${totalCount}\\n`;\n    messageText += `🔄 Оновлено: ${updateTime}\\n\\n`;\n    messageText += `🔔 - очікує оператора\\n`;\n    messageText += `👨‍💻 - лід взятий оператором\\n`;\n    messageText += `🔴 - агент відключений вручну`;\n}\n\nreturn {\n    text: messageText,\n    reply_markup: {\n        inline_keyboard: keyboard\n    },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        208
+      ],
+      "id": "e25f7161-3ecc-4135-9688-3d57c0bc3ea0",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE client_schema.leads \nSET \n    operator_connected = true,\n    connected_operator_id = {{ $json.operator_data.id }},\n    connected_operator_name = '{{ $json.operator_data.username }}',\n    operator_connected_at = NOW(),\n    waiting_for_operator = false,\n    agent_disabled = true,\n    agent_disable_type = 'temporary',\n    updated_at = NOW()\nWHERE external_id = '{{ $json.callback_query.data.split(\"_\").pop() }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        368
+      ],
+      "id": "f31eb632-2591-4d49-aa35-f6957f7b1916",
+      "name": "Взяти клієнта",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE client_schema.leads \nSET \n    operator_connected = false,\n    connected_operator_id = NULL,\n    connected_operator_name = NULL,\n    operator_connected_at = NULL,\n    waiting_for_operator = false,\n    agent_disabled = false,\n    agent_disable_type = NULL,\n    updated_at = NOW()\nWHERE external_id = '{{ $json.callback_query.data.split(\"_\").pop() }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        528
+      ],
+      "id": "062ed400-2037-47f6-a2e2-af06caf8e392",
+      "name": "Завершення діалогу та відв'язка",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const codeData = $('Code').first().json;\nconst leadData = $input.first().json;\n\nconst callbackData = codeData.callback_query.data;\nconst leadId = callbackData.split('_')[1];\nconst msgId = codeData.callback_query.message.message_id;\nconst chatId = codeData.callback_query.message.chat.id;\nconst operatorName = codeData.operator_data.username;\n\nlet clientName = '';\nif (leadData.first_name && \n    String(leadData.first_name) !== 'undefined' && \n    String(leadData.first_name) !== 'null' && \n    String(leadData.first_name).trim() !== '') {\n    clientName = String(leadData.first_name).trim();\n} else if (leadData.username && \n    String(leadData.username) !== 'undefined' && \n    String(leadData.username) !== 'null' && \n    String(leadData.username).trim() !== '') {\n    clientName = String(leadData.username).trim();\n} else {\n    clientName = `ID: ${leadId.slice(-6)}`;\n}\n\nconst notificationText = `✅ <b>Діалог завершено</b>\\n\\nДіалог з клієнтом <b>${clientName}</b> (<code>${leadId}</code>) успішно завершено оператором <b>${operatorName}</b>.\\n\\n🤖 AI агент знову активний для цього клієнта.`;\n\nconst buttons = [\n    [{ text: '🏠 Головна', callback_data: 'main_menu' }],\n    [{ text: '❌ Закрити список', callback_data: 'close' }]\n];\n\nreturn {\n    chat_id: chatId,\n    message_id: msgId,\n    text: notificationText,\n    reply_markup: { inline_keyboard: buttons },\n    parse_mode: 'HTML'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        528
+      ],
+      "id": "32f475f7-6708-4a9a-a78f-aeb87e0a172c",
+      "name": "Code8"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    channel_type,\n    username,\n    first_name,\n    waiting_for_operator,\n    agent_disabled,\n    agent_disable_type,\n    last_activity_at,\n    last_message_from,\n    created_at,\n    channel_id,\n    operator_connected,\n    connected_operator_name,\n    connected_operator_id,\n    operator_connected_at\nFROM client_schema.leads \nWHERE external_id = '{{ $('Code').first().json.callback_query.data.split(\"_\").pop() }}'\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1072,
+        368
+      ],
+      "id": "36fcc481-9c35-4f0d-8176-f01380090107",
+      "name": "Отримання інфи",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        -128
+      ],
+      "id": "523b612e-167b-4093-a0ab-a47366dff624",
+      "name": "Отправка списку7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const messageId = $json.callback_query.message.message_id;\nconst chatId = $json.callback_query.message.chat.id;\n\nreturn {\n    method: 'deleteMessage',\n    chat_id: chatId,\n    message_id: messageId\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        688
+      ],
+      "id": "896c8971-a369-4c88-b42e-27c7132ecd73",
+      "name": "Закрити список"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/deleteMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $json.message_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        688
+      ],
+      "id": "bcc54576-d539-4c10-bb33-357a8090a3ba",
+      "name": "Удалить список"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    external_id,\n    first_name,\n    username,\n    channel_type\nFROM client_schema.leads \nWHERE external_id = '{{ $('Code').first().json.callback_query.data.split(\"_\").pop() }}'\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1072,
+        528
+      ],
+      "id": "1cb2d883-6980-45fc-9227-52823c6b4007",
+      "name": "Данні2",
+      "credentials": {
+        "postgres": {
+          "id": "YOUR_POSTGRES_CRED_ID",
+          "name": "client_db"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        208
+      ],
+      "id": "cf6be912-5a20-4c1c-a329-6d3d8850056f",
+      "name": "Отправка списку10"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        48
+      ],
+      "id": "a8837270-5249-4459-ba11-82c4a587c935",
+      "name": "Отправка списку3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        -448
+      ],
+      "id": "b14c2aa4-bce0-445c-836b-ae2f4d36bf80",
+      "name": "Отправка списку1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        368
+      ],
+      "id": "8efb8fd6-8d20-44a9-9b14-9d65eb681d80",
+      "name": "Отправка списку4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/botYOUR_TELEGRAM_BOT_TOKEN/editMessageText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Проверка на оператора').first().json.id }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $('Code').first().json.callback_query.message.message_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify($json.reply_markup) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        528
+      ],
+      "id": "b1b9fc82-ad46-41f8-b219-c259c81b3dc5",
+      "name": "Отправка списку5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Проверка на оператора",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Проверка на оператора": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Формуємо список",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Формуємо список (головне меню)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отримання з ким спілкується агент",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Показати інфу",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Вручную отключить клиента",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список лідів вимкнутих вручну",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ввімкнення вручну ліда",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список очікування оператора",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Взяти клієнта",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Завершення діалогу та відв'язка",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отримання з ким спілкується агент",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список очікування оператора",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список лідів вимкнутих вручну",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отримання з ким спілкується агент",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список очікування оператора",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Список лідів вимкнутих вручну",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Закрити список",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Отправка инфы",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Показати інфу": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Формуємо список": {
+      "main": [
+        [
+          {
+            "node": "Відправка списку двух категорій",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отримання з ким спілкується агент": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Вручную отключить клиента": {
+      "main": [
+        [
+          {
+            "node": "Данні",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Список лідів вимкнутих вручну": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Данні": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Формуємо список (головне меню)": {
+      "main": [
+        [
+          {
+            "node": "Відправка списку двух категорій1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ввімкнення вручну ліда": {
+      "main": [
+        [
+          {
+            "node": "Данні1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Данні1": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Список очікування оператора": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Взяти клієнта": {
+      "main": [
+        [
+          {
+            "node": "Отримання інфи",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Завершення діалогу та відв'язка": {
+      "main": [
+        [
+          {
+            "node": "Данні2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "Отправка списку5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отримання інфи": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Закрити список": {
+      "main": [
+        [
+          {
+            "node": "Удалить список",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Данні2": {
+      "main": [
+        [
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Kyiv",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "36f60bb3-6e2f-4aca-906e-cd1cca655538",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "229b39550a2e76e3694b0ab9df440b6248bd7a539de321f2c46f22b4373f43bb"
+  },
+  "id": "54VypbR77yV8dJc9",
+  "tags": []
+}
